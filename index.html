@@ -1,0 +1,889 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="装修记账">
+    <meta name="theme-color" content="#3b82f6">
+    <title>装修记账</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%233b82f6'/><text x='50' y='65' font-size='60' text-anchor='middle' fill='white'>🏠</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            padding: 20px 0;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .stat-row:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        .stat-value.budget {
+            color: #10b981;
+        }
+
+        .stat-value.spent {
+            color: #ef4444;
+        }
+
+        .stat-value.remaining {
+            color: #3b82f6;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            background: white;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn:active {
+            background: #2563eb;
+        }
+
+        .expense-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .expense-item {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .expense-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 8px;
+        }
+
+        .expense-category {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #dbeafe;
+            color: #1e40af;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .expense-amount {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ef4444;
+        }
+
+        .expense-description {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .expense-date {
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        .expense-delete {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .empty-state-text {
+            font-size: 16px;
+        }
+
+        .category-stats {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .category-item:last-child {
+            border-bottom: none;
+        }
+
+        .category-name {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .category-amount {
+            color: #ef4444;
+            font-weight: bold;
+        }
+
+        .budget-setting {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .budget-input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .budget-input-group input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .budget-input-group button {
+            padding: 12px 24px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .install-prompt {
+            position: fixed;
+            bottom: 90px;
+            left: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 1000;
+        }
+
+        .install-prompt.show {
+            display: block;
+        }
+
+        .install-prompt-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .install-prompt-icon {
+            font-size: 32px;
+        }
+
+        .install-prompt-text {
+            flex: 1;
+        }
+
+        .install-prompt-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .install-prompt-desc {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .install-prompt-btn {
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .install-prompt-close {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #9ca3af;
+        }
+
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        .nav-item {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            background: none;
+            border: none;
+            color: #6b7280;
+            font-size: 12px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .nav-item.active {
+            color: #3b82f6;
+        }
+
+        .nav-item-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 2000;
+            display: none;
+        }
+
+        .toast.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateX(-50%) translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="toast" id="toast"></div>
+
+    <div class="install-prompt" id="installPrompt">
+        <button class="install-prompt-close" onclick="closeInstallPrompt()">×</button>
+        <div class="install-prompt-content">
+            <div class="install-prompt-icon">📱</div>
+            <div class="install-prompt-text">
+                <div class="install-prompt-title">添加到主屏幕</div>
+                <div class="install-prompt-desc">像原生App一样使用装修记账</div>
+            </div>
+        </div>
+        <button class="install-prompt-btn" onclick="showInstallInstructions()">查看安装方法</button>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🏠 装修记账</h1>
+            <p>记录每一笔装修支出</p>
+        </div>
+
+        <div class="stats-card">
+            <div class="stat-row">
+                <div>
+                    <div class="stat-label">总预算</div>
+                    <div class="stat-value budget" id="totalBudget">¥0</div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="stat-label">已花费</div>
+                    <div class="stat-value spent" id="totalSpent">¥0</div>
+                </div>
+            </div>
+            <div class="stat-row">
+                <div>
+                    <div class="stat-label">剩余预算</div>
+                    <div class="stat-value remaining" id="remainingBudget">¥0</div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="stat-label">记账笔数</div>
+                    <div class="stat-value" id="totalRecords">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-bar">
+            <button class="nav-item active" onclick="switchView('record')">
+                <div class="nav-item-icon">📝</div>
+                <div>记账</div>
+            </button>
+            <button class="nav-item" onclick="switchView('list')">
+                <div class="nav-item-icon">📋</div>
+                <div>明细</div>
+            </button>
+            <button class="nav-item" onclick="switchView('stats')">
+                <div class="nav-item-icon">📊</div>
+                <div>统计</div>
+            </button>
+            <button class="nav-item" onclick="switchView('settings')">
+                <div class="nav-item-icon">⚙️</div>
+                <div>设置</div>
+            </button>
+        </div>
+
+        <div id="recordView" class="tab-content active">
+            <div class="form-card">
+                <div class="form-group">
+                    <label>金额 (元)</label>
+                    <input type="number" id="amount" placeholder="请输入金额" inputmode="decimal" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>类别</label>
+                    <select id="category">
+                        <option value="">请选择类别</option>
+                        <option value="设计费">设计费</option>
+                        <option value="拆改">拆改</option>
+                        <option value="水电">水电</option>
+                        <option value="泥瓦">泥瓦</option>
+                        <option value="木工">木工</option>
+                        <option value="油漆">油漆</option>
+                        <option value="主材">主材</option>
+                        <option value="家具">家具</option>
+                        <option value="家电">家电</option>
+                        <option value="软装">软装</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>说明</label>
+                    <textarea id="description" placeholder="例如：客厅地砖、主卧衣柜等"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>日期</label>
+                    <input type="date" id="date">
+                </div>
+                <button class="btn" onclick="addExpense()">添加记录</button>
+            </div>
+        </div>
+
+        <div id="listView" class="tab-content">
+            <div class="expense-list" id="expenseList"></div>
+        </div>
+
+        <div id="statsView" class="tab-content">
+            <div class="category-stats">
+                <h3 style="margin-bottom: 16px; color: #374151;">分类统计</h3>
+                <div id="categoryStats"></div>
+            </div>
+        </div>
+
+        <div id="settingsView" class="tab-content">
+            <div class="budget-setting">
+                <h3 style="margin-bottom: 16px; color: #374151;">设置总预算</h3>
+                <div class="budget-input-group">
+                    <input type="number" id="budgetInput" placeholder="请输入总预算金额" inputmode="decimal" step="0.01">
+                    <button onclick="setBudget()">保存</button>
+                </div>
+            </div>
+
+            <div class="form-card" style="margin-top: 20px;">
+                <h3 style="margin-bottom: 16px; color: #374151;">数据管理</h3>
+                <button class="btn" style="background: #10b981; margin-bottom: 10px;" onclick="exportData()">📤 导出数据</button>
+                <button class="btn" style="background: #f59e0b; margin-bottom: 10px;" onclick="document.getElementById('importFile').click()">📥 导入数据</button>
+                <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
+                <button class="btn" style="background: #ef4444;" onclick="clearAllData()">🗑️ 清空所有数据</button>
+            </div>
+
+            <div class="form-card" style="margin-top: 20px;">
+                <h3 style="margin-bottom: 16px; color: #374151;">使用说明</h3>
+                <div style="color: #6b7280; font-size: 14px; line-height: 1.6;">
+                    <p>📱 <strong>添加到主屏幕</strong></p>
+                    <p style="margin-bottom: 12px;">在 Safari 浏览器中打开，点击分享按钮，选择"添加到主屏幕"，即可像原生App一样使用。</p>
+                    <p>💾 <strong>数据存储</strong></p>
+                    <p style="margin-bottom: 12px;">所有数据保存在本地，不会上传到服务器。建议定期导出数据备份。</p>
+                    <p>🔒 <strong>隐私保护</strong></p>
+                    <p>完全离线运行，无需网络连接，保护您的隐私。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化
+        let expenses = JSON.parse(localStorage.getItem('renovationExpenses')) || [];
+        let budget = parseFloat(localStorage.getItem('renovationBudget')) || 0;
+
+        // 设置默认日期为今天
+        document.getElementById('date').valueAsDate = new Date();
+
+        // 更新统计
+        function updateStats() {
+            const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+            const remaining = budget - totalSpent;
+
+            document.getElementById('totalBudget').textContent = `¥${budget.toFixed(2)}`;
+            document.getElementById('totalSpent').textContent = `¥${totalSpent.toFixed(2)}`;
+            document.getElementById('remainingBudget').textContent = `¥${remaining.toFixed(2)}`;
+            document.getElementById('totalRecords').textContent = expenses.length;
+
+            // 更新剩余预算颜色
+            const remainingEl = document.getElementById('remainingBudget');
+            if (remaining < 0) {
+                remainingEl.style.color = '#ef4444';
+            } else if (remaining < budget * 0.2) {
+                remainingEl.style.color = '#f59e0b';
+            } else {
+                remainingEl.style.color = '#3b82f6';
+            }
+        }
+
+        // 添加支出
+        function addExpense() {
+            const amount = parseFloat(document.getElementById('amount').value);
+            const category = document.getElementById('category').value;
+            const description = document.getElementById('description').value.trim();
+            const date = document.getElementById('date').value;
+
+            if (!amount || amount <= 0) {
+                showToast('请输入有效的金额');
+                return;
+            }
+            if (!category) {
+                showToast('请选择类别');
+                return;
+            }
+            if (!date) {
+                showToast('请选择日期');
+                return;
+            }
+
+            const expense = {
+                id: Date.now(),
+                amount,
+                category,
+                description: description || category,
+                date
+            };
+
+            expenses.unshift(expense);
+            localStorage.setItem('renovationExpenses', JSON.stringify(expenses));
+
+            // 清空表单
+            document.getElementById('amount').value = '';
+            document.getElementById('category').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('date').valueAsDate = new Date();
+
+            updateStats();
+            renderExpenseList();
+            renderCategoryStats();
+            showToast('添加成功！');
+        }
+
+        // 删除支出
+        function deleteExpense(id) {
+            if (confirm('确定要删除这条记录吗？')) {
+                expenses = expenses.filter(expense => expense.id !== id);
+                localStorage.setItem('renovationExpenses', JSON.stringify(expenses));
+                updateStats();
+                renderExpenseList();
+                renderCategoryStats();
+                showToast('删除成功！');
+            }
+        }
+
+        // 渲染支出列表
+        function renderExpenseList() {
+            const listEl = document.getElementById('expenseList');
+
+            if (expenses.length === 0) {
+                listEl.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <div class="empty-state-text">还没有记录，快去记账吧！</div>
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = expenses.map(expense => `
+                <div class="expense-item">
+                    <button class="expense-delete" onclick="deleteExpense(${expense.id})">×</button>
+                    <div class="expense-header">
+                        <span class="expense-category">${expense.category}</span>
+                        <span class="expense-amount">¥${expense.amount.toFixed(2)}</span>
+                    </div>
+                    <div class="expense-description">${expense.description}</div>
+                    <div class="expense-date">${formatDate(expense.date)}</div>
+                </div>
+            `).join('');
+        }
+
+        // 渲染分类统计
+        function renderCategoryStats() {
+            const statsEl = document.getElementById('categoryStats');
+
+            if (expenses.length === 0) {
+                statsEl.innerHTML = '<p style="text-align: center; color: #9ca3af; padding: 20px;">暂无数据</p>';
+                return;
+            }
+
+            const categoryTotals = {};
+            expenses.forEach(expense => {
+                if (!categoryTotals[expense.category]) {
+                    categoryTotals[expense.category] = 0;
+                }
+                categoryTotals[expense.category] += expense.amount;
+            });
+
+            const sortedCategories = Object.entries(categoryTotals)
+                .sort((a, b) => b[1] - a[1]);
+
+            const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+
+            statsEl.innerHTML = sortedCategories.map(([category, amount]) => {
+                const percentage = ((amount / totalSpent) * 100).toFixed(1);
+                return `
+                    <div class="category-item">
+                        <div>
+                            <div class="category-name">${category}</div>
+                            <div style="font-size: 12px; color: #9ca3af; margin-top: 4px;">${percentage}%</div>
+                        </div>
+                        <div class="category-amount">¥${amount.toFixed(2)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 设置预算
+        function setBudget() {
+            const newBudget = parseFloat(document.getElementById('budgetInput').value);
+            if (!newBudget || newBudget <= 0) {
+                showToast('请输入有效的预算金额');
+                return;
+            }
+
+            budget = newBudget;
+            localStorage.setItem('renovationBudget', budget.toString());
+            document.getElementById('budgetInput').value = '';
+            updateStats();
+            showToast('预算设置成功！');
+        }
+
+        // 导出数据
+        function exportData() {
+            const data = {
+                expenses,
+                budget,
+                exportDate: new Date().toISOString()
+            };
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `装修记账_${new Date().toLocaleDateString('zh-CN')}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+            showToast('导出成功！');
+        }
+
+        // 导入数据
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.expenses && Array.isArray(data.expenses)) {
+                        if (confirm(`确定要导入 ${data.expenses.length} 条记录吗？这将覆盖当前数据。`)) {
+                            expenses = data.expenses;
+                            budget = data.budget || 0;
+                            localStorage.setItem('renovationExpenses', JSON.stringify(expenses));
+                            localStorage.setItem('renovationBudget', budget.toString());
+                            updateStats();
+                            renderExpenseList();
+                            renderCategoryStats();
+                            showToast('导入成功！');
+                        }
+                    } else {
+                        showToast('文件格式不正确');
+                    }
+                } catch (error) {
+                    showToast('导入失败，请检查文件格式');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // 清空所有数据
+        function clearAllData() {
+            if (confirm('确定要清空所有数据吗？此操作不可恢复！')) {
+                if (confirm('再次确认：真的要清空吗？')) {
+                    expenses = [];
+                    budget = 0;
+                    localStorage.removeItem('renovationExpenses');
+                    localStorage.removeItem('renovationBudget');
+                    updateStats();
+                    renderExpenseList();
+                    renderCategoryStats();
+                    showToast('数据已清空');
+                }
+            }
+        }
+
+        // 切换视图
+        function switchView(view) {
+            // 更新导航栏
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            // 更新内容
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(view + 'View').classList.add('active');
+
+            // 切换到明细或统计时刷新数据
+            if (view === 'list') renderExpenseList();
+            if (view === 'stats') renderCategoryStats();
+        }
+
+        // 显示提示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // 格式化日期
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // 安装提示
+        function showInstallPrompt() {
+            if (!localStorage.getItem('installPromptShown')) {
+                setTimeout(() => {
+                    document.getElementById('installPrompt').classList.add('show');
+                    localStorage.setItem('installPromptShown', 'true');
+                }, 3000);
+            }
+        }
+
+        function closeInstallPrompt() {
+            document.getElementById('installPrompt').classList.remove('show');
+        }
+
+        function showInstallInstructions() {
+            alert('安装步骤：\n\n1. 点击 Safari 浏览器底部的分享按钮（方框加向上箭头）\n2. 向下滑动，找到"添加到主屏幕"\n3. 点击右上角的"添加"按钮\n4. 完成后，您可以在主屏幕上找到装修记账图标\n\n添加后，您可以像使用原生App一样全屏使用！');
+            closeInstallPrompt();
+        }
+
+        // 初始化显示
+        updateStats();
+        renderExpenseList();
+        renderCategoryStats();
+
+        // 检查是否显示安装提示
+        if (!window.matchMedia('(display-mode: standalone)').matches) {
+            showInstallPrompt();
+        }
+
+        // 注册 Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => {
+                console.log('Service Worker 注册失败:', err);
+            });
+        }
+    </script>
+</body>
+</html>
